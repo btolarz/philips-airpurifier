@@ -62,14 +62,14 @@ class PhilipsAirPurifierFan(FanEntity):
         self._name = config[CONF_NAME]
         self._state = None
         self._session_key = None
-        
+
         self._fan_speed = None
-        
+
         self._pre_filter = None
         self._wick_filter = None
         self._carbon_filter = None
         self._hepa_filter = None
-        
+
         self._pm25 = None
         self._humidity = None
         self._target_humidity = None
@@ -80,11 +80,11 @@ class PhilipsAirPurifierFan(FanEntity):
         self._used_index = None
         self._water_level = None
         self._child_lock = None
-        
+
         self.update()
-    
+
     ### Update Fan attributes ###
-    
+
     def update(self):
         url = 'http://{}/di/v1/products/1/fltsts'.format(self._host)
         filters = self._get(url)
@@ -93,7 +93,7 @@ class PhilipsAirPurifierFan(FanEntity):
             self._wick_filter = filters['wicksts']
         self._carbon_filter = filters['fltsts2']
         self._hepa_filter = filters['fltsts1']
-        
+
         url = 'http://{}/di/v1/products/1/air'.format(self._host)
         status = self._get(url)
         if 'pwr' in status:
@@ -135,29 +135,29 @@ class PhilipsAirPurifierFan(FanEntity):
             self._water_level = status['wl']
         if 'cl' in status:
             self._child_lock = status['cl']
-    
+
     ### Properties ###
-    
+
     @property
     def state(self):
         return self._state
-    
+
     @property
     def name(self):
         return self._name
-    
+
     @property
     def icon(self):
         return ICON
-    
+
     @property
     def speed_list(self) -> list:
         return SPEED_LIST
-    
+
     @property
     def speed(self) -> str:
         return self._fan_speed
-    
+
     def turn_on(self, speed: str = None, **kwargs) -> None:
         if speed is None:
             values = {}
@@ -170,7 +170,7 @@ class PhilipsAirPurifierFan(FanEntity):
         values = {}
         values['pwr'] = '0'
         self.set_values(values)
-    
+
     def set_speed(self, speed: str):
         values = {}
         if speed == 'Turbo':
@@ -188,7 +188,7 @@ class PhilipsAirPurifierFan(FanEntity):
         elif speed == 'Sleep Mode':
             values['mode'] = 'S'
         self.set_values(values)
-    
+
     @property
     def device_state_attributes(self):
         attr = {}
@@ -221,16 +221,16 @@ class PhilipsAirPurifierFan(FanEntity):
         if self._hepa_filter != None:
           attr['hepa_filter'] = self._hepa_filter
         return attr
-    
+
     ### Other methods ###
-    
+
     def set_values(self, values):
         body = encrypt(values, self._session_key)
         url = 'http://{}/di/v1/products/1/air'.format(self._host)
         req = urllib.request.Request(url=url, data=body, method='PUT')
         with urllib.request.urlopen(req) as response:
             resp = response.read()
-    
+
     def _get_key(self):
         url = 'http://{}/di/v1/products/0/security'.format(self._host)
         a = random.getrandbits(256)
@@ -247,7 +247,7 @@ class PhilipsAirPurifierFan(FanEntity):
         s_bytes = s.to_bytes(128, byteorder='big')[:16]
         session_key = aes_decrypt(bytes.fromhex(key), s_bytes)
         self._session_key = session_key[:16]
-    
+
     def _get_once(self, url):
         with urllib.request.urlopen(url) as response:
             resp = response.read()
